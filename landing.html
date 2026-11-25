@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ELD Training Simulator</title>
+<meta name="description" content="Practice hours-of-service logs, timers and split-sleeper rules in a safe training simulator. Your logs are saved to your own account.">
+<style>
+:root{--bg:#0b1424;--bg2:#101c33;--card:#14213a;--edge:#243553;--ink:#eef3fb;--muted:#9fb0c9;--accent:#5b8cff;--accent2:#7aa7ff;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171;--sb:#b79cff;--on:#fbbf24;--off:#a3b3c9;--r:14px}
+@media(prefers-color-scheme:light){:root{--bg:#f4f7fc;--bg2:#e9eff8;--card:#fff;--edge:#d5deea;--ink:#14213a;--muted:#52647b;--accent:#245bd8;--accent2:#1d4fc2;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;--sb:#7c3aed;--on:#b45309;--off:#64748b}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--accent2)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--edge)}
+nav .wrap{display:flex;align-items:center;gap:16px;height:60px}
+.logo{font-weight:800;letter-spacing:.01em;display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none}
+.logo i{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#2a4fb8);display:grid;place-items:center;font-style:normal;font-size:13px;color:#fff}
+nav .sp{flex:1}nav a.link{color:var(--muted);text-decoration:none;font-size:14px}nav a.link:hover{color:var(--ink)}
+button,.btn{font:inherit;font-weight:600;border-radius:10px;border:1px solid var(--edge);background:var(--card);color:var(--ink);padding:10px 18px;cursor:pointer;text-decoration:none;display:inline-block}
+button:hover,.btn:hover{border-color:var(--accent)}
+.primary{background:var(--accent);border-color:var(--accent);color:#fff}.primary:hover{filter:brightness(1.08)}
+.hero{padding:72px 0 48px;display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center}
+.eyebrow{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:14px}
+h1{font-size:clamp(32px,5vw,52px);line-height:1.08;margin:0 0 18px;letter-spacing:-.02em}
+.lead{color:var(--muted);font-size:18px;max-width:34em;margin:0 0 28px}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.cta .btn,.cta button{padding:13px 24px;font-size:16px}
+.note{margin-top:16px;font-size:13px;color:var(--muted)}
+.panel{background:var(--card);border:1px solid var(--edge);border-radius:var(--r);padding:16px;box-shadow:0 20px 50px #0006}
+.panel .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--edge);color:var(--muted)}
+.chip b{color:var(--ink)}
+.meters{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.meter{background:var(--bg2);border:1px solid var(--edge);border-radius:10px;text-align:center;padding:8px 4px}
+.meter b{display:block;font-size:18px;font-variant-numeric:tabular-nums}.meter span{font-size:11px;color:var(--muted)}
+svg{display:block;width:100%;height:auto}
+section.block{padding:56px 0;border-top:1px solid var(--edge)}
+h2{font-size:clamp(24px,3.4vw,34px);margin:0 0 10px;letter-spacing:-.01em}
+.sub{color:var(--muted);max-width:40em;margin:0 0 30px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--edge);border-radius:var(--r);padding:20px}
+.card h3{margin:0 0 6px;font-size:17px}.card p{margin:0;color:var(--muted);font-size:15px}
+.card .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;margin-bottom:12px;font-size:18px;background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.steps{counter-reset:s;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.steps .card:before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;margin-bottom:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:14px}.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.disc{background:color-mix(in srgb,var(--warn) 10%,var(--card));border:1px solid color-mix(in srgb,var(--warn) 40%,var(--edge));border-radius:var(--r);padding:16px 20px;font-size:14px;color:var(--muted)}
+footer{padding:30px 0 50px;color:var(--muted);font-size:13px;border-top:1px solid var(--edge)}
+/* auth dialog */
+dialog{border:1px solid var(--edge);border-radius:16px;background:var(--card);color:var(--ink);padding:0;width:min(420px,calc(100vw - 24px));box-shadow:0 30px 80px #000a}
+dialog::backdrop{background:#030814b8;backdrop-filter:blur(3px)}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 0}.dh h2{font-size:22px;margin:0}
+.x{border:0;background:none;font-size:22px;padding:4px 8px;color:var(--muted)}
+.tabs{display:flex;gap:4px;margin:14px 22px 0;background:var(--bg2);border-radius:10px;padding:4px}
+.tabs button{flex:1;border:0;background:none;padding:8px;color:var(--muted);border-radius:8px}.tabs button[aria-selected=true]{background:var(--card);color:var(--ink);box-shadow:0 1px 4px #0004}
+form{padding:18px 22px 22px;display:grid;gap:12px}
+label{display:grid;gap:5px;font-size:13px;color:var(--muted);font-weight:600}
+input{font:inherit;padding:11px 12px;border-radius:10px;border:1px solid var(--edge);background:var(--bg2);color:var(--ink)}
+input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.msg{font-size:13px;min-height:18px}.msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}
+.linkbtn{border:0;background:none;color:var(--accent2);padding:0;font-weight:500;font-size:13px;text-align:left}
+form .primary{width:100%;padding:12px}
+[hidden]{display:none!important}
+.setup{background:color-mix(in srgb,var(--bad) 12%,var(--card));border:1px solid var(--bad);border-radius:12px;padding:12px 16px;font-size:14px;margin:16px 0}
+@media(max-width:860px){.hero{grid-template-columns:1fr;padding-top:40px}.grid,.steps{grid-template-columns:1fr}nav a.link{display:none}}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <a class="logo" href="#top"><i>⏱</i>ELD Training Simulator</a>
+  <span class="sp"></span>
+  <a class="link" href="#features">Features</a><a class="link" href="#how">How it works</a>
+  <span id="navAuth"><button id="navLogin">Log in</button> <button class="primary" id="navSignup">Sign up</button></span>
+  <a class="btn primary" id="navOpen" href="simulator.html" hidden>Open simulator</a>
+</div></nav>
+
+<main id="top" class="wrap">
+  <div id="setupWarn" class="setup" hidden><b>Backend not configured.</b> Open <code>config.js</code> and paste your Supabase project URL and anon key (see README). Until then, <a href="simulator.html">the simulator runs locally</a> without accounts.</div>
+
+  <section class="hero">
+    <div>
+      <span class="eyebrow">Hours-of-service training</span>
+      <h1>Learn to read and fix an ELD log — without risking a real one.</h1>
+      <p class="lead">Build duty-status logs, watch the Break, Driving, Shift and Cycle timers react, and see exactly where a violation starts. Every driver, dispatcher or student gets a private simulator saved to their own account.</p>
+      <div class="cta">
+        <button class="primary" id="heroSignup">Create free account</button>
+        <button id="heroLogin">Log in</button>
+        <a class="btn primary" id="heroOpen" href="simulator.html" hidden>Open my simulator</a>
+      </div>
+      <p class="note">Educational tool — not a certified ELD and not for compliance use.</p>
+    </div>
+    <div class="panel" aria-label="Preview of a day log">
+      <div class="row"><span class="chip"><b>11/25/2026</b></span><span class="chip">0 Violations</span><span class="chip">Drive <b>07:00</b></span><span class="chip">Sleeper <b>07:12</b></span></div>
+      <svg viewBox="0 0 520 190" role="img" aria-label="Sample duty status graph">
+        <g stroke="currentColor" stroke-opacity=".18">
+          <line x1="40" x2="500" y1="20" y2="20"/><line x1="40" x2="500" y1="62" y2="62"/><line x1="40" x2="500" y1="104" y2="104"/><line x1="40" x2="500" y1="146" y2="146"/><line x1="40" x2="500" y1="178" y2="178"/>
+        </g>
+        <g fill="currentColor" fill-opacity=".55" font-size="11"><text x="4" y="45">OFF</text><text x="4" y="87">SB</text><text x="4" y="129">DR</text><text x="4" y="165">ON</text></g>
+        <rect x="40" y="62" width="460" height="42" fill="#8b5cf6" opacity=".07"/><rect x="40" y="104" width="460" height="42" fill="#22c55e" opacity=".09"/><rect x="40" y="146" width="460" height="32" fill="#3b82f6" opacity=".09"/>
+        <g fill="none" stroke-width="3.4" stroke-linecap="round">
+          <path d="M40 125 H176" stroke="var(--ok)"/><path d="M176 125 V41 H196 V125" stroke="currentColor" stroke-opacity=".6" stroke-width="2"/>
+          <path d="M176 41 H196" stroke="var(--off)"/><path d="M196 125 H300" stroke="var(--ok)"/>
+          <path d="M300 125 V162 H314 V83" stroke="currentColor" stroke-opacity=".6" stroke-width="2"/><path d="M300 162 H314" stroke="var(--on)"/>
+          <path d="M314 83 H470" stroke="var(--sb)"/>
+        </g>
+        <line x1="470" x2="470" y1="14" y2="178" stroke="var(--accent2)" stroke-dasharray="4 4"/><text x="470" y="11" text-anchor="middle" font-size="10" font-weight="700" fill="var(--accent2)">NOW</text>
+      </svg>
+      <div class="meters"><div class="meter"><b>08:00</b><span>Break</span></div><div class="meter"><b>04:00</b><span>Driving</span></div><div class="meter"><b>06:00</b><span>Shift</span></div><div class="meter"><b>54:30</b><span>Cycle</span></div></div>
+      <div class="legend"><span><i style="background:var(--ok)"></i>Driving</span><span><i style="background:var(--on)"></i>On duty</span><span><i style="background:var(--sb)"></i>Sleeper</span><span><i style="background:var(--off)"></i>Off duty</span></div>
+    </div>
+  </section>
+
+  <section class="block" id="features">
+    <h2>Everything a log lesson needs</h2>
+    <p class="sub">Edit a graph by dragging, then watch the rules answer back in real time.</p>
+    <div class="grid">
+      <div class="card"><div class="ic">⏲</div><h3>Live HOS timers</h3><p>30-minute break, 11-hour driving, 14-hour shift and 60/70-hour cycle, always showing where you are right now.</p></div>
+      <div class="card"><div class="ic">🛏</div><h3>Split-sleeper pairing</h3><p>7/3, 8/2 and chained pairs modelled on 49 CFR 395.1(g), including pairs that cross midnight.</p></div>
+      <div class="card"><div class="ic">⚠</div><h3>Violations you can see</h3><p>Violations are shaded right on the graph and listed with their start time, so you learn what caused them.</p></div>
+      <div class="card"><div class="ic">✎</div><h3>Freely editable logs</h3><p>Drag segment edges, change status, duplicate events, shift several at once or transfer time between days.</p></div>
+      <div class="card"><div class="ic">▦</div><h3>Multi-day view</h3><p>Pick any range on one calendar and review every day as a card, with per-day totals and events.</p></div>
+      <div class="card"><div class="ic">☁</div><h3>Your own account</h3><p>Sign in on any device and pick up where you left off. Your logs are private to you.</p></div>
+    </div>
+  </section>
+
+  <section class="block" id="how">
+    <h2>How it works</h2>
+    <p class="sub">From sign-up to your first practice log in a couple of minutes.</p>
+    <div class="steps">
+      <div class="card"><h3>Create an account</h3><p>Use your email and a password. Confirm your email if asked.</p></div>
+      <div class="card"><h3>Open your simulator</h3><p>You get a private workspace. Try the built-in demo or start logging your own statuses.</p></div>
+      <div class="card"><h3>Practice and review</h3><p>Edit logs, check timers and violations, and print the days you want to discuss.</p></div>
+    </div>
+  </section>
+
+  <section class="block"><div class="disc"><b>Please note.</b> This is an educational simulator. It is not a certified ELD, does not replace a registered ELD, and its results are not a compliance determination. Hours-of-service rules have exceptions (for example adverse driving and short-haul) that this training model may not cover.</div></section>
+</main>
+<footer><div class="wrap">© ELD Training Simulator · Training only · Your logs are stored in your own account.</div></footer>
+
+<dialog id="authDlg" aria-labelledby="authTitle">
+  <div class="dh"><h2 id="authTitle">Welcome</h2><button class="x" id="authClose" aria-label="Close">×</button></div>
+  <div class="tabs" role="tablist" id="authTabs"><button role="tab" data-tab="login" aria-selected="true">Log in</button><button role="tab" data-tab="signup" aria-selected="false">Sign up</button></div>
+
+  <form id="fLogin" autocomplete="on">
+    <label>Email<input type="email" id="liEmail" autocomplete="email" required></label>
+    <label>Password<input type="password" id="liPass" autocomplete="current-password" required></label>
+    <div class="msg" id="liMsg" role="alert"></div>
+    <button class="primary" id="liBtn">Log in</button>
+    <button type="button" class="linkbtn" id="toForgot">Forgot your password?</button>
+  </form>
+
+  <form id="fSignup" hidden autocomplete="on">
+    <label>Email<input type="email" id="suEmail" autocomplete="email" required></label>
+    <label>Password (min 8 characters)<input type="password" id="suPass" autocomplete="new-password" minlength="8" required></label>
+    <label>Repeat password<input type="password" id="suPass2" autocomplete="new-password" minlength="8" required></label>
+    <div class="msg" id="suMsg" role="alert"></div>
+    <button class="primary" id="suBtn">Create account</button>
+  </form>
+
+  <form id="fForgot" hidden>
+    <label>Email<input type="email" id="fgEmail" autocomplete="email" required></label>
+    <div class="msg" id="fgMsg" role="alert"></div>
+    <button class="primary" id="fgBtn">Send reset link</button>
+    <button type="button" class="linkbtn" id="toLogin">Back to log in</button>
+  </form>
+
+  <form id="fReset" hidden>
+    <label>New password (min 8 characters)<input type="password" id="rsPass" autocomplete="new-password" minlength="8" required></label>
+    <div class="msg" id="rsMsg" role="alert"></div>
+    <button class="primary" id="rsBtn">Save new password</button>
+  </form>
+</dialog>
+
+<script src="config.js"></script>
+<script>
+(async function(){
+const $=id=>document.getElementById(id),C=window.ELD_CONFIG||{};
+if(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&!window.supabase){await new Promise(r=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';s.onload=s.onerror=()=>r();document.head.appendChild(s)})}
+const SIM=new URL('simulator.html',location.href).href,HOME=new URL('landing.html',location.href).href;
+const ready=!!(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&window.supabase);
+const dlg=$('authDlg'),forms={login:$('fLogin'),signup:$('fSignup'),forgot:$('fForgot'),reset:$('fReset')};
+const titles={login:'Welcome back',signup:'Create your account',forgot:'Reset password',reset:'Choose a new password'};
+let sb=null;
+
+function show(name){
+  for(const k in forms)forms[k].hidden=k!==name;
+  $('authTabs').hidden=name==='forgot'||name==='reset';
+  for(const b of $('authTabs').children)b.setAttribute('aria-selected',String(b.dataset.tab===name));
+  $('authTitle').textContent=titles[name];
+  for(const m of document.querySelectorAll('.msg')){m.textContent='';m.className='msg'}
+}
+function open(name){
+  if(!ready){$('setupWarn').hidden=false;$('setupWarn').scrollIntoView({block:'center'});return}
+  show(name);if(!dlg.open)dlg.showModal();
+  setTimeout(()=>forms[name].querySelector('input')?.focus(),30);
+}
+function say(id,text,ok){const m=$(id);m.textContent=text;m.className='msg '+(ok?'ok':'err')}
+function busy(btn,on,label){btn.disabled=on;if(label)btn.textContent=on?'Please wait…':label}
+
+$('navLogin').onclick=$('heroLogin').onclick=()=>open('login');
+$('navSignup').onclick=$('heroSignup').onclick=()=>open('signup');
+$('authClose').onclick=()=>dlg.close();
+$('authTabs').onclick=e=>{const t=e.target.closest('[data-tab]');if(t)show(t.dataset.tab)};
+$('toForgot').onclick=()=>{show('forgot');$('fgEmail').value=$('liEmail').value;$('fgEmail').focus()};
+$('toLogin').onclick=()=>show('login');
+
+if(!ready){$('setupWarn').hidden=false;return}
+
+sb=window.supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+function signedIn(on){$('navAuth').hidden=on;$('navOpen').hidden=!on;$('heroLogin').hidden=on;$('heroSignup').hidden=on;$('heroOpen').hidden=!on}
+sb.auth.getSession().then(({data})=>signedIn(!!data.session));
+sb.auth.onAuthStateChange((ev,session)=>{
+  if(ev==='PASSWORD_RECOVERY'){show('reset');if(!dlg.open)dlg.showModal()}
+  else signedIn(!!session);
+});
+if(/type=recovery/.test(location.hash)){show('reset');dlg.showModal()}
+
+$('fLogin').onsubmit=async e=>{
+  e.preventDefault();busy($('liBtn'),true,'Log in');
+  const {error}=await sb.auth.signInWithPassword({email:$('liEmail').value.trim(),password:$('liPass').value});
+  busy($('liBtn'),false,'Log in');
+  if(error){say('liMsg',/invalid login/i.test(error.message)?'Wrong email or password.':error.message);return}
+  say('liMsg','Signed in — opening your simulator…',true);location.href=SIM;
+};
+$('fSignup').onsubmit=async e=>{
+  e.preventDefault();
+  if($('suPass').value.length<8){say('suMsg','Password must be at least 8 characters.');return}
+  if($('suPass').value!==$('suPass2').value){say('suMsg','The two passwords do not match.');return}
+  busy($('suBtn'),true,'Create account');
+  const {data,error}=await sb.auth.signUp({email:$('suEmail').value.trim(),password:$('suPass').value,options:{emailRedirectTo:SIM}});
+  busy($('suBtn'),false,'Create account');
+  if(error){say('suMsg',error.message);return}
+  if(data.session){say('suMsg','Account created — opening your simulator…',true);location.href=SIM;return}
+  // Supabase hides whether an address is already registered: an empty identities list means it is.
+  if(data.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){say('suMsg','This email is already registered. Try logging in instead.');return}
+  say('suMsg','Almost done! Check your inbox and confirm your email, then log in.',true);
+};
+$('fForgot').onsubmit=async e=>{
+  e.preventDefault();busy($('fgBtn'),true,'Send reset link');
+  const {error}=await sb.auth.resetPasswordForEmail($('fgEmail').value.trim(),{redirectTo:HOME});
+  busy($('fgBtn'),false,'Send reset link');
+  if(error){say('fgMsg',error.message);return}
+  say('fgMsg','If that email has an account, a reset link is on its way.',true);
+};
+$('fReset').onsubmit=async e=>{
+  e.preventDefault();
+  if($('rsPass').value.length<8){say('rsMsg','Password must be at least 8 characters.');return}
+  busy($('rsBtn'),true,'Save new password');
+  const {error}=await sb.auth.updateUser({password:$('rsPass').value});
+  busy($('rsBtn'),false,'Save new password');
+  if(error){say('rsMsg',error.message);return}
+  say('rsMsg','Password updated — opening your simulator…',true);setTimeout(()=>location.href=SIM,700);
+};
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ELD Simulator Admin</title>
+<style>
+:root{--bg:#0b1424;--bg2:#101c33;--card:#14213a;--edge:#243553;--ink:#eef3fb;--muted:#9fb0c9;--accent:#5b8cff;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171}
+@media(prefers-color-scheme:light){:root{--bg:#f4f7fc;--bg2:#e9eff8;--card:#fff;--edge:#d5deea;--ink:#14213a;--muted:#52647b;--accent:#245bd8;--ok:#15803d;--warn:#b45309;--bad:#b91c1c}}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--edge)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+header .wrap{display:flex;align-items:center;gap:12px;height:58px}header h1{font-size:17px;margin:0}header .sp{flex:1}
+.pill{font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--edge);color:var(--muted)}
+button,a.btn{font:inherit;font-weight:600;font-size:14px;border-radius:9px;border:1px solid var(--edge);background:var(--card);color:var(--ink);padding:7px 13px;cursor:pointer;text-decoration:none}
+button:hover:not(:disabled){border-color:var(--accent)}button:disabled{opacity:.5;cursor:default}
+.primary{background:var(--accent);border-color:var(--accent);color:#fff}.danger{color:var(--bad)}.danger:hover:not(:disabled){border-color:var(--bad)}
+main{padding:24px 0 60px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stat{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:14px 16px}.stat b{display:block;font-size:26px;font-variant-numeric:tabular-nums}.stat span{font-size:13px;color:var(--muted)}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+input[type=search],input[type=text]{font:inherit;padding:9px 12px;border-radius:9px;border:1px solid var(--edge);background:var(--bg2);color:var(--ink)}input[type=search]{flex:1;min-width:200px}
+select{font:inherit;padding:9px 10px;border-radius:9px;border:1px solid var(--edge);background:var(--bg2);color:var(--ink)}
+.tbl{background:var(--card);border:1px solid var(--edge);border-radius:12px;overflow:auto}
+table{border-collapse:collapse;width:100%;min-width:900px}th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--edge);white-space:nowrap}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg2);position:sticky;top:0}
+tr:last-child td{border-bottom:0}tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+td.em{font-weight:600;max-width:210px;overflow:hidden;text-overflow:ellipsis}td.num{font-variant-numeric:tabular-nums}td.act{text-align:right;white-space:normal;min-width:250px}td.act button{padding:3px 9px;font-size:12px;margin:2px 0 2px 4px}
+.badge{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid currentColor}
+.b-ok{color:var(--ok)}.b-warn{color:var(--warn)}.b-bad{color:var(--bad)}.b-me{color:var(--accent)}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.gate{max-width:440px;margin:14vh auto;background:var(--card);border:1px solid var(--edge);border-radius:16px;padding:28px}
+.gate h2{margin:0 0 6px}.gate p{color:var(--muted);margin:0 0 16px}.gate form{display:grid;gap:10px}
+.msg{font-size:13px;min-height:18px;color:var(--bad)}.msg.ok{color:var(--ok)}
+dialog{border:1px solid var(--edge);border-radius:14px;background:var(--card);color:var(--ink);padding:0;width:min(760px,calc(100vw - 24px));max-height:88vh}
+dialog::backdrop{background:#030814b8}.dlgh{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--edge)}.dlgh h2{font-size:17px;margin:0;flex:1;overflow:hidden;text-overflow:ellipsis}
+.dlgb{padding:16px 20px;overflow:auto;max-height:calc(88vh - 70px)}
+.day{margin-bottom:16px}.day h3{margin:0 0 6px;font-size:14px}.day table{min-width:0}.day td,.day th{padding:6px 10px;font-size:13px}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--card);border:1px solid var(--edge);padding:11px 16px;border-radius:10px;box-shadow:0 10px 30px #0006;z-index:50}.toast.err{border-color:var(--bad);color:var(--bad)}
+[hidden]{display:none!important}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div id="gate" class="gate" hidden>
+  <h2 id="gTitle">Admin sign in</h2><p id="gText">Sign in with your admin account.</p>
+  <form id="gForm" hidden>
+    <input type="text" id="gEmail" placeholder="Email" autocomplete="email" required>
+    <input type="password" id="gPass" placeholder="Password" autocomplete="current-password" required>
+    <div class="msg" id="gMsg"></div><button class="primary">Sign in</button>
+  </form>
+  <div class="msg" id="gMsg2"></div>
+  <p><a class="btn" href="landing.html">← Back to site</a> <button id="gOut" hidden>Log out</button></p>
+</div>
+
+<div id="app" hidden>
+<header><div class="wrap">
+  <h1>ELD Simulator · Admin</h1><span class="pill" id="me"></span><span class="sp"></span>
+  <button id="refresh">↻ Refresh</button><a class="btn" href="simulator.html">Open simulator</a><button id="out">Log out</button>
+</div></header>
+<main class="wrap">
+  <div class="stats">
+    <div class="stat"><b id="sTotal">–</b><span>Total users</span></div>
+    <div class="stat"><b id="sActive">–</b><span>Signed in, last 7 days</span></div>
+    <div class="stat"><b id="sNew">–</b><span>New, last 7 days</span></div>
+    <div class="stat"><b id="sDays">–</b><span>Total logged days</span></div>
+  </div>
+  <div class="tools">
+    <input type="search" id="q" placeholder="Search by email…" aria-label="Search users">
+    <select id="flt" aria-label="Filter"><option value="all">All users</option><option value="active">Active (7 days)</option><option value="empty">No logs yet</option><option value="blocked">Blocked</option><option value="unconfirmed">Email not confirmed</option></select>
+    <select id="srt" aria-label="Sort"><option value="created">Newest first</option><option value="signin">Last sign-in</option><option value="days">Most logged days</option><option value="email">Email A–Z</option></select>
+    <span class="pill" id="cnt"></span>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Email</th><th>Status</th><th>Joined</th><th>Last sign-in</th><th>Days</th><th>Events</th><th>Logs updated</th><th></th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table><div class="empty" id="empty" hidden>No users match.</div></div>
+</main>
+</div>
+
+<dialog id="logDlg"><div class="dlgh"><h2 id="logTitle"></h2><button id="logClose">Close</button></div><div class="dlgb" id="logBody"></div></dialog>
+<dialog id="delDlg"><div class="dlgh"><h2>Delete user</h2></div><div class="dlgb">
+  <p>This permanently deletes the account <b id="delEmail"></b> and all of its logs. It cannot be undone.</p>
+  <p>Type the email to confirm:</p><input type="text" id="delType" style="width:100%" autocomplete="off">
+  <p style="text-align:right"><button id="delNo">Cancel</button> <button class="danger" id="delYes" disabled>Delete permanently</button></p>
+</div></dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script src="config.js"></script>
+<script>
+(async function(){
+const $=id=>document.getElementById(id),C=window.ELD_CONFIG||{};
+const CDN='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
+if(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&!window.supabase){await new Promise(r=>{const s=document.createElement('script');s.src=CDN;s.onload=s.onerror=()=>r();document.head.appendChild(s)})}
+const gate=(title,text,{form=false,out=false}={})=>{$('gate').hidden=false;$('app').hidden=true;$('gTitle').textContent=title;$('gText').textContent=text;$('gForm').hidden=!form;$('gOut').hidden=!out};
+if(!(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&window.supabase)){gate('Not configured','Fill in config.js with your Supabase URL and anon key first.');return}
+const sb=window.supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+let me=null,users=[];
+const toast=(t,err)=>{const el=$('toast');el.textContent=t;el.className='toast'+(err?' err':'');el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3200)};
+const fmtD=s=>s?new Date(s).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+const fmtT=s=>s?new Date(s).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+const ago=s=>s&&(Date.now()-new Date(s).getTime())<7*864e5;
+const hm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+
+async function start(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){gate('Admin sign in','Sign in with your admin account.',{form:true});return}
+  me=session.user;
+  const {data:ok,error}=await sb.rpc('is_admin');
+  if(error||ok!==true){gate('Access denied',(me.email||'This account')+' is not an administrator.'+(error?' (Admin functions are not installed — run admin.sql.)':''),{out:true});return}
+  $('gate').hidden=true;$('app').hidden=false;$('me').textContent=me.email;await load();
+}
+async function load(){
+  const {data,error}=await sb.rpc('admin_list_users');
+  if(error){toast('Could not load users: '+error.message,true);return}
+  users=data||[];draw();
+}
+function stats(){
+  $('sTotal').textContent=users.length;
+  $('sActive').textContent=users.filter(u=>ago(u.last_sign_in_at)).length;
+  $('sNew').textContent=users.filter(u=>ago(u.created_at)).length;
+  $('sDays').textContent=users.reduce((n,u)=>n+(u.log_days||0),0);
+}
+const blocked=u=>!!u.banned_until&&(u.banned_until==='infinity'||new Date(u.banned_until)>new Date());
+function draw(){
+  stats();
+  const q=$('q').value.trim().toLowerCase(),f=$('flt').value,s=$('srt').value;
+  let a=users.filter(u=>(!q||(u.email||'').toLowerCase().includes(q))&&(f==='all'||(f==='active'&&ago(u.last_sign_in_at))||(f==='empty'&&!u.log_days)||(f==='blocked'&&blocked(u))||(f==='unconfirmed'&&!u.email_confirmed_at)));
+  const key={created:u=>-new Date(u.created_at),signin:u=>-(u.last_sign_in_at?new Date(u.last_sign_in_at):0),days:u=>-(u.log_days||0),email:u=>(u.email||'')}[s];
+  a.sort((x,y)=>{const p=key(x),r=key(y);return p<r?-1:p>r?1:0});
+  $('cnt').textContent=a.length+' of '+users.length;$('empty').hidden=a.length>0;
+  const tb=$('rows');tb.textContent='';
+  for(const u of a){
+    const tr=document.createElement('tr'),add=(txt,cls)=>{const td=document.createElement('td');td.textContent=txt;if(cls)td.className=cls;tr.append(td);return td};
+    add(u.email||'(no email)','em').title=u.email||'';
+    const st=add('');const b=document.createElement('span');b.className='badge';
+    if(u.id===me.id){b.textContent='You (admin)';b.classList.add('b-me')}else if(blocked(u)){b.textContent='Blocked';b.classList.add('b-bad')}else if(!u.email_confirmed_at){b.textContent='Unconfirmed';b.classList.add('b-warn')}else{b.textContent='Active';b.classList.add('b-ok')}
+    st.append(b);
+    add(fmtD(u.created_at));add(fmtT(u.last_sign_in_at));add(String(u.log_days||0),'num');add(String(u.log_events||0),'num');add(fmtT(u.logs_updated_at));
+    const act=add('','act');const btn=(t,fn,cls,dis)=>{const x=document.createElement('button');x.textContent=t;if(cls)x.className=cls;x.disabled=!!dis;x.onclick=fn;act.append(x)};
+    const self=u.id===me.id;
+    btn('View logs',()=>viewLogs(u));
+    btn('Reset link',()=>resetLink(u),'',!u.email);
+    btn('Clear logs',()=>clearLogs(u),'danger',!u.log_days);
+    btn(blocked(u)?'Unblock':'Block',()=>setBan(u,!blocked(u)),'danger',self);
+    btn('Delete',()=>askDelete(u),'danger',self);
+    tb.append(tr);
+  }
+}
+async function viewLogs(u){
+  $('logTitle').textContent='Logs · '+(u.email||u.id);const body=$('logBody');body.textContent='Loading…';$('logDlg').showModal();
+  const {data,error}=await sb.rpc('admin_get_logs',{target:u.id});
+  if(error){body.textContent='Error: '+error.message;return}
+  const days=Object.keys(data||{}).filter(k=>Array.isArray(data[k])&&data[k].length).sort().reverse();
+  body.textContent='';if(!days.length){body.textContent='This user has no logs yet.';return}
+  const note=document.createElement('p');note.style.color='var(--muted)';note.textContent='Read-only view · '+days.length+' day(s)';body.append(note);
+  for(const k of days){
+    const d=document.createElement('div');d.className='day';const h=document.createElement('h3');h.textContent=k;d.append(h);
+    const t=document.createElement('table'),hr=t.insertRow();for(const x of ['Status','Start','Odometer','Notes']){const th=document.createElement('th');th.textContent=x;hr.append(th)}
+    for(const e of data[k].slice().sort((x,y)=>x.m-y.m)){const r=t.insertRow();for(const v of [e.s,hm(e.m),e.o==null?'—':Number(e.o).toLocaleString('en-US'),e.n||'—'])r.insertCell().textContent=v}
+    d.append(t);body.append(d);
+  }
+}
+async function resetLink(u){const {error}=await sb.auth.resetPasswordForEmail(u.email,{redirectTo:new URL('landing.html',location.href).href});error?toast(error.message,true):toast('Password reset email sent to '+u.email)}
+async function clearLogs(u){
+  if(!confirm('Clear ALL logs of '+u.email+'? This cannot be undone.'))return;
+  const {error}=await sb.rpc('admin_clear_logs',{target:u.id});if(error){toast(error.message,true);return}toast('Logs cleared');load();
+}
+async function setBan(u,ban){
+  if(!confirm((ban?'Block ':'Unblock ')+u.email+'?'+(ban?'\n\nThey will not be able to sign in again. An already open session can stay valid for up to an hour.':'')))return;
+  const {error}=await sb.rpc('admin_set_ban',{target:u.id,ban});if(error){toast(error.message,true);return}toast(ban?'User blocked':'User unblocked');load();
+}
+let delU=null;
+function askDelete(u){delU=u;$('delEmail').textContent=u.email;$('delType').value='';$('delYes').disabled=true;$('delDlg').showModal();$('delType').focus()}
+$('delType').oninput=()=>{$('delYes').disabled=$('delType').value.trim().toLowerCase()!==(delU.email||'').toLowerCase()};
+$('delNo').onclick=()=>$('delDlg').close();
+$('delYes').onclick=async()=>{const u=delU;$('delYes').disabled=true;const {error}=await sb.rpc('admin_delete_user',{target:u.id});$('delDlg').close();if(error){toast(error.message,true);return}toast('User deleted');load()};
+$('logClose').onclick=()=>$('logDlg').close();
+$('q').oninput=$('flt').onchange=$('srt').onchange=draw;
+$('refresh').onclick=load;
+const out=async()=>{await sb.auth.signOut();location.reload()};$('out').onclick=$('gOut').onclick=out;
+$('gForm').onsubmit=async e=>{e.preventDefault();const {error}=await sb.auth.signInWithPassword({email:$('gEmail').value.trim(),password:$('gPass').value});if(error){$('gMsg').textContent='Wrong email or password.';return}start()};
+start();
+})();
+</script>
+</body>
+</html>
