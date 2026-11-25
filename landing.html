@@ -72,7 +72,7 @@ form .primary{width:100%;padding:12px}
   <span class="sp"></span>
   <a class="link" href="#features">Features</a><a class="link" href="#how">How it works</a>
   <span id="navAuth"><button id="navLogin">Log in</button> <button class="primary" id="navSignup">Sign up</button></span>
-  <a class="btn primary" id="navOpen" href="simulator.html" hidden>Open simulator</a>
+  <a class="btn" id="navAdmin" href="admin.html" hidden>Admin panel</a> <a class="btn primary" id="navOpen" href="simulator.html" hidden>Open simulator</a>
 </div></nav>
 
 <main id="top" class="wrap">
@@ -87,6 +87,7 @@ form .primary{width:100%;padding:12px}
         <button class="primary" id="heroSignup">Create free account</button>
         <button id="heroLogin">Log in</button>
         <a class="btn primary" id="heroOpen" href="simulator.html" hidden>Open my simulator</a>
+        <a class="btn" id="heroAdmin" href="admin.html" hidden>Admin panel</a>
       </div>
       <p class="note">Educational tool — not a certified ELD and not for compliance use.</p>
     </div>
@@ -177,7 +178,7 @@ form .primary{width:100%;padding:12px}
 (async function(){
 const $=id=>document.getElementById(id),C=window.ELD_CONFIG||{};
 if(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&!window.supabase){await new Promise(r=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';s.onload=s.onerror=()=>r();document.head.appendChild(s)})}
-const SIM=new URL('simulator.html',location.href).href,HOME=new URL('landing.html',location.href).href;
+const SIM=new URL('simulator.html',location.href).href,ADMIN=new URL('admin.html',location.href).href,HOME=new URL('landing.html',location.href).href;
 const ready=!!(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&window.supabase);
 const dlg=$('authDlg'),forms={login:$('fLogin'),signup:$('fSignup'),forgot:$('fForgot'),reset:$('fReset')};
 const titles={login:'Welcome back',signup:'Create your account',forgot:'Reset password',reset:'Choose a new password'};
@@ -208,7 +209,11 @@ $('toLogin').onclick=()=>show('login');
 if(!ready){$('setupWarn').hidden=false;return}
 
 sb=window.supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-function signedIn(on){$('navAuth').hidden=on;$('navOpen').hidden=!on;$('heroLogin').hidden=on;$('heroSignup').hidden=on;$('heroOpen').hidden=!on}
+async function isAdmin(){try{const {data,error}=await sb.rpc('is_admin');return !error&&data===true}catch{return false}}
+async function destAfterLogin(){return (await isAdmin())?ADMIN:SIM}   // admins land in the admin panel, everyone else in the simulator
+function signedIn(on){$('navAuth').hidden=on;$('navOpen').hidden=!on;$('heroLogin').hidden=on;$('heroSignup').hidden=on;$('heroOpen').hidden=!on;
+  if(!on){$('navAdmin').hidden=$('heroAdmin').hidden=true;return}
+  isAdmin().then(a=>{$('navAdmin').hidden=$('heroAdmin').hidden=!a})}
 sb.auth.getSession().then(({data})=>signedIn(!!data.session));
 sb.auth.onAuthStateChange((ev,session)=>{
   if(ev==='PASSWORD_RECOVERY'){show('reset');if(!dlg.open)dlg.showModal()}
@@ -221,7 +226,7 @@ $('fLogin').onsubmit=async e=>{
   const {error}=await sb.auth.signInWithPassword({email:$('liEmail').value.trim(),password:$('liPass').value});
   busy($('liBtn'),false,'Log in');
   if(error){say('liMsg',/invalid login/i.test(error.message)?'Wrong email or password.':error.message);return}
-  say('liMsg','Signed in — opening your simulator…',true);location.href=SIM;
+  say('liMsg','Signed in — opening…',true);location.href=await destAfterLogin();
 };
 $('fSignup').onsubmit=async e=>{
   e.preventDefault();
@@ -250,7 +255,7 @@ $('fReset').onsubmit=async e=>{
   const {error}=await sb.auth.updateUser({password:$('rsPass').value});
   busy($('rsBtn'),false,'Save new password');
   if(error){say('rsMsg',error.message);return}
-  say('rsMsg','Password updated — opening your simulator…',true);setTimeout(()=>location.href=SIM,700);
+  say('rsMsg','Password updated — opening your simulator…',true);setTimeout(async()=>location.href=await destAfterLogin(),700);
 };
 })();
 </script>
